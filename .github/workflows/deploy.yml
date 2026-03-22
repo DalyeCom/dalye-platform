@@ -15,9 +15,9 @@ jobs:
     env:
       NODE_VERSION: 20
       PNPM_VERSION: 9
-      APP_DIR: apps/web
       BUILD_DIR: apps/web/dist
       ASSETS_DIR: assets
+      E2_BUCKET: dalye-prod-public
 
     steps:
       - name: Checkout
@@ -35,7 +35,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile=false
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build frontend
         run: pnpm --filter web build
@@ -47,6 +47,12 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy ${{ env.BUILD_DIR }} --project-name=dalye-web
 
+      - name: Install AWS CLI
+        if: ${{ hashFiles('assets/**') != '' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
       - name: Configure AWS CLI for IDrive E2
         if: ${{ hashFiles('assets/**') != '' }}
         run: |
@@ -57,7 +63,7 @@ jobs:
       - name: Sync assets to IDrive E2
         if: ${{ hashFiles('assets/**') != '' }}
         run: |
-          aws s3 sync "${{ env.ASSETS_DIR }}" "s3://dalye-prod-public" \
+          aws s3 sync "${{ env.ASSETS_DIR }}" "s3://${{ env.E2_BUCKET }}" \
             --endpoint-url "${{ secrets.IDRIVE_E2_ENDPOINT }}" \
             --delete \
             --cache-control "public, max-age=31536000, immutable"
