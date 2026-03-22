@@ -1,0 +1,66 @@
+name: Deploy Web
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    env:
+      NODE_VERSION: 20
+      PNPM_VERSION: 9
+      APP_DIR: apps/web
+      BUILD_DIR: apps/web/dist
+      ASSETS_DIR: assets
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Build frontend
+        run: pnpm --filter web build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy ${{ env.BUILD_DIR }} --project-name=dalye-web
+
+      - name: Configure AWS CLI for IDrive E2
+        if: ${{ hashFiles('assets/**') != '' }}
+        run: |
+          aws configure set aws_access_key_id "${{ secrets.IDRIVE_E2_ACCESS_KEY }}"
+          aws configure set aws_secret_access_key "${{ secrets.IDRIVE_E2_SECRET_KEY }}"
+          aws configure set default.region us-east-1
+
+      - name: Sync assets to IDrive E2
+        if: ${{ hashFiles('assets/**') != '' }}
+        run: |
+          aws s3 sync "${{ env.ASSETS_DIR }}" "s3://dalye-prod-public" \
+            --endpoint-url "${{ secrets.IDRIVE_E2_ENDPOINT }}" \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable"
+
+      - name: Done
+        run: echo "Deploy completed"
