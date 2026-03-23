@@ -45,6 +45,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy ${{ env.BUILD_DIR }} --project-name=dalye-web
+          packageManager: npm
 
       - name: Install AWS CLI
         if: ${{ hashFiles('assets/**') != '' }}
