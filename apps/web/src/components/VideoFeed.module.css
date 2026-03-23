@@ -1,0 +1,41 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg) 0;
+}
+
+.videoCard {
+  cursor: pointer;
+}
+
+.thumbnailPlaceholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: var(--color-border);
+  border-radius: calc(var(--border-radius) / 2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-xs);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.author {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
